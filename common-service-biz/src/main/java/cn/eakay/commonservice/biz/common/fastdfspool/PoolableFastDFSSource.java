@@ -58,6 +58,7 @@ public class PoolableFastDFSSource implements Serializable {
         try {
             //归还对象
             pool.returnObject(this);
+            log.info("归还一个Source到fast对象池中:id={},池中活跃对象数:active={}", getSourceId(), pool.getNumActive());
         } catch (final IllegalStateException e) {
             // pool is closed, close the source
             setClosed(true);

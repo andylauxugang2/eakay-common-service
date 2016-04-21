@@ -40,7 +40,7 @@ public class FastDFSFileManagerImpl implements FastDFSFileManager {
         try {
             //getFastDFSSource调用一次会addObject一次到pool
             poolableFastDFSSource = fastDFSSource.getFastDFSSource();
-
+            log.info("从fast对象池中获取一个Source:id={}", poolableFastDFSSource.getSourceId());
             StorageClient storageClient = poolableFastDFSSource.getStorageClient();
             TrackerServer trackerServer = poolableFastDFSSource.getTrackerServer();
 
