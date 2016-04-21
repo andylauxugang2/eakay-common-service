@@ -1,6 +1,7 @@
 package cn.eakay.commonservice.biz.service;
 
 import cn.eakay.commonservice.client.dataobject.FastDFSFileDO;
+import cn.eakay.commonservice.client.dataobject.FileDO;
 import cn.eakay.commonservice.client.result.FileOptResultDO;
 
 /**
@@ -19,19 +20,16 @@ public interface FileOptService {
 
     /**
      * 查询文件
-     * @param groupName
-     * @param remoteFileName 全网唯一文件名
+     * @param fileDO
      * @return
      */
-    FileOptResultDO getFile(String groupName, String remoteFileName);
+    FileOptResultDO getFile(FileDO fileDO);
 
     /**
      * 删除文件
      * @param id file id
-     * @param groupName
-     * @param remoteFileName
      * @return
      */
-    FileOptResultDO deleteFile(Long id, String groupName, String remoteFileName);
+    FileOptResultDO deleteFile(Long id);
 
 }

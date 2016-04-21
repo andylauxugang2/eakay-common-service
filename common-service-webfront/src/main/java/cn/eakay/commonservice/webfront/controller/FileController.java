@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.commons.CommonsMultipartFile;
 
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by xugang on 16/4/7.
@@ -31,20 +33,27 @@ public class FileController extends BaseController {
      * 上传文件
      * 支持批量
      *
-     * @param uploadfiles
+     * @param uploadFiles
+     * @param biz
+     * @param key
+     * @param keyId
      * @return
      */
     @RequestMapping(value = "/uploads", method = RequestMethod.POST)
-    public ResponseEntity<Void> uploadFileBatch(@RequestParam("uploadfiles") CommonsMultipartFile[] uploadfiles) {
-        if (uploadfiles.length == 0) {
+    public ResponseEntity<List<FileOptResultDO>> uploadFileBatch(@RequestParam("uploadfiles") CommonsMultipartFile[] uploadFiles,
+                                                                 @RequestParam("biz") Integer biz,
+                                                                 @RequestParam("key") Integer key,
+                                                                 @RequestParam("keyId") Long keyId) {
+        if (uploadFiles.length == 0) {
             log.error("uploads file error:{}", "param uploadfiles is empty");
-            return new ResponseEntity<Void>(HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR);
         }
+        log.info("begin uploading files " + uploadFiles.length);
 
-        log.info("begin uploading files " + uploadfiles.length);
+        List<FileOptResultDO> result = new ArrayList<>();
 
-        for (int i = 0; i < uploadfiles.length; i++) {
-            CommonsMultipartFile multipartFile = uploadfiles[i];
+        for (int i = 0; i < uploadFiles.length; i++) {
+            CommonsMultipartFile multipartFile = uploadFiles[i];
             if (multipartFile == null || multipartFile.isEmpty()) {
                 continue;
             }
@@ -56,68 +65,74 @@ public class FileController extends BaseController {
                 is.read(fileData);
                 fastDFSFileDO.setName(multipartFile.getOriginalFilename());
                 fastDFSFileDO.setContent(fileData);
-                FileOptResultDO fileOptResultDO;
-                fileOptResultDO = fileOptService.uploadFile(fastDFSFileDO);
+                fastDFSFileDO.setBiz(biz);
+                fastDFSFileDO.setKey(key);
+                fastDFSFileDO.setKeyId(keyId);
 
-                if (fileOptResultDO.isFailure()) {
+                //fileOptService.uploadFile不会抛异常
+                FileOptResultDO fileOptResultDO = fileOptService.uploadFile(fastDFSFileDO);
+
+                if (!fileOptResultDO.isSuccess()) {
                     log.error("uploading file failed error:{}", fileOptResultDO.getErrorCode() + fileOptResultDO.getErrorMsg());
-                    return new ResponseEntity<Void>(HttpStatus.INTERNAL_SERVER_ERROR);
                 }
+
+                //客户端需要遍历结果集 获取失败的上传item
+                result.add(fileOptResultDO);
             } catch (Exception e) {
                 if (log.isDebugEnabled()) {
                     e.printStackTrace();
                 }
                 log.error("upload file failed. Exception:", e);
-                return new ResponseEntity<Void>(HttpStatus.INTERNAL_SERVER_ERROR);
+                return new ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR);
             }
         }
 
-        return new ResponseEntity<Void>(HttpStatus.CREATED);
+        return new ResponseEntity<List<FileOptResultDO>>(result, HttpStatus.CREATED);
     }
 
     /**
      * 获取文件
      *
-     * @param groupName
-     * @param remoteFileName
+     * @param biz
+     * @param key
+     * @param keyId
      * @return
      */
-    @RequestMapping(value = "fetch/{groupName}", method = RequestMethod.GET, params = {"remoteFileName"}, produces = {MediaType.APPLICATION_JSON_VALUE})
-    public ResponseEntity<FileDO> fetchingFile(@PathVariable("groupName") String groupName,
-                                               @RequestParam("remoteFileName") String remoteFileName) {
+    @RequestMapping(value = "fetch/{biz}/{key}/{keyId}", method = RequestMethod.GET, produces = {MediaType.APPLICATION_JSON_VALUE})
+    public ResponseEntity<FileOptResultDO> fetchingFile(@PathVariable("biz") Integer biz,
+                                                        @PathVariable("key") Integer key,
+                                                        @PathVariable("keyId") Long keyId) {
 
-        log.info("Fetching File with groupName={},remoteFileName={}", groupName, remoteFileName);
+        log.info("Fetching File with biz={},key={},keyId={}", new Object[]{biz, key, keyId});
+        FileDO fileDO = new FileDO();
+        fileDO.setBiz(biz);
+        fileDO.setKey(key);
+        fileDO.setKeyId(keyId);
+        FileOptResultDO resultDO = fileOptService.getFile(fileDO);
 
-        FileOptResultDO resultDO = fileOptService.getFile(groupName, remoteFileName);
-
-        if (resultDO.isFailure()) {
-            log.error("Fetching File failed,groupName={},remoteFileName={},error={}", new Object[]{groupName, remoteFileName, resultDO.getErrorCode() + resultDO.getErrorMsg()});
-            return new ResponseEntity<FileDO>(HttpStatus.INTERNAL_SERVER_ERROR);
+        if (!resultDO.isSuccess()) {
+            log.error("Fetching File failed,biz={},key={},keyId={},error={}", new Object[]{biz, key, keyId, resultDO.getErrorCode() + resultDO.getErrorMsg()});
         }
-        return new ResponseEntity<FileDO>(resultDO.getFileDO(), HttpStatus.OK);
+        return new ResponseEntity<FileOptResultDO>(resultDO, HttpStatus.OK);
     }
 
     /**
      * 删文件
      *
-     * @param groupName
-     * @param remoteFileName
+     * @param id
      * @return
      */
-    @RequestMapping(value = "/{id}/{groupName}", params = {"remoteFileName"}, method = RequestMethod.DELETE)
-    public ResponseEntity<Void> deleteFile(@PathVariable("id") Long id,
-                                           @PathVariable("groupName") String groupName,
-                                           @RequestParam("remoteFileName") String remoteFileName) {
+    @RequestMapping(value = "/{id}", method = RequestMethod.DELETE)
+    public ResponseEntity<FileOptResultDO> deleteFile(@PathVariable("id") Long id) {
 
-        log.info("Fetching & delete file with fileId={},groupName={},remoteFileName={}", new Object[]{id, groupName, remoteFileName});
+        log.info("Fetching & delete file with fileId={}", id);
 
-        FileOptResultDO resultDO = fileOptService.deleteFile(id, groupName, remoteFileName);
-        if (resultDO.isFailure()) {
-            log.error("delete file failed:fileId={},groupName={},remoteFileName={},error={}", new Object[]{id, groupName, remoteFileName, resultDO.getErrorCode() + resultDO.getErrorMsg()});
-            return new ResponseEntity<Void>(HttpStatus.INTERNAL_SERVER_ERROR);
+        FileOptResultDO resultDO = fileOptService.deleteFile(id);
+        if (!resultDO.isSuccess()) {
+            log.error("delete file failed:fileId={}, error={}", new Object[]{id, resultDO.getErrorCode() + resultDO.getErrorMsg()});
         }
 
-        return new ResponseEntity<Void>(HttpStatus.NO_CONTENT);
+        return new ResponseEntity<FileOptResultDO>(resultDO, HttpStatus.NO_CONTENT);
 
     }
 }

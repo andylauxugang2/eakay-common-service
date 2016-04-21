@@ -9,9 +9,11 @@ import org.apache.ibatis.annotations.Param;
 public interface FileDAO {
     void insertOne(FileDO fileDO);
 
-    FileDO queryByGroupNameAndRemoteFileName(@Param("groupName") String groupName, @Param("remoteFileName") String remoteFileName);
+    FileDO queryByBizAndKeyAndKeyId(@Param("biz") Integer biz, @Param("key") Integer key, @Param("keyId") Long keyId);
 
     FileDO queryById(Long id);
 
     void deleteById(Long id);
+
+    void updateOne(FileDO fileDO);
 }

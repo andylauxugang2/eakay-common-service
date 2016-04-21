@@ -21,5 +21,7 @@ public class FileDO extends BaseDO {
     private String name;
     private String groupName;
     private String remoteFileName;
-    private String biz;
+    private Integer biz;
+    private Integer key;
+    private Long keyId;
 }

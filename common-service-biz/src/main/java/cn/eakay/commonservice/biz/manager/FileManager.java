@@ -11,9 +11,12 @@ import cn.eakay.commonservice.client.dataobject.FileDO;
 public interface FileManager {
     void addFileOne(FileDO fileDO) throws DAOException;
 
-    FileDO findFileOne(String groupName, String remoteFileName) throws DAOException;
+    FileDO findFileOne(Integer biz, Integer key, Long keyId) throws DAOException;
 
     FileDO findFileById(Long id) throws DAOException;
 
     void deleteFileById(Long id) throws DAOException;
+
+    //TODO 需要添加 updateOption 参数
+    void updateFileOne(FileDO fileDO);
 }

@@ -5,6 +5,7 @@ import cn.eakay.commonservice.biz.manager.FileManager;
 import cn.eakay.commonservice.client.dataobject.FileDO;
 import cn.eakay.commonservice.repository.db.mybatis.FileDAO;
 import lombok.extern.slf4j.Slf4j;
+import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -29,11 +30,11 @@ public class FileManagerImpl implements FileManager {
     }
 
     @Override
-    public FileDO findFileOne(String groupName, String remoteFileName) throws DAOException {
+    public FileDO findFileOne(Integer biz, Integer key, Long keyId) throws DAOException {
         try {
-            return fileDAO.queryByGroupNameAndRemoteFileName(groupName, remoteFileName);
+            return fileDAO.queryByBizAndKeyAndKeyId(biz, key, keyId);
         } catch (Exception e) {
-            log.error("findFileOne error/DB,groupName={},remoteFileName={}", groupName, remoteFileName, e);
+            log.error("findFileOne error/DB,biz={},key={},keyId={}", new Object[]{biz, key, keyId}, e);
             throw new DAOException("findFileOne error", e);
         }
     }
@@ -55,6 +56,17 @@ public class FileManagerImpl implements FileManager {
         } catch (Exception e) {
             log.error("deleteFileById error/DB,id={}", id, e);
             throw new DAOException("deleteFileById error", e);
+        }
+    }
+
+    @Override
+    public void updateFileOne(FileDO fileDO) {
+        try {
+            fileDO.setUpdateTime(DateTime.now());
+            fileDAO.updateOne(fileDO);
+        } catch (Exception e) {
+            log.error("updateFileOne error/DB,id={}", fileDO, e);
+            throw new DAOException("updateFileOne error", e);
         }
     }
 }

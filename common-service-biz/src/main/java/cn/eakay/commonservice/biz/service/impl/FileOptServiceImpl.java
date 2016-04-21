@@ -47,22 +47,26 @@ public class FileOptServiceImpl implements FileOptService {
             }
 
             FileUploadResultDO fileUploadResultDO = fastDFSFileManager.uploadFast(fastDFSFileDO);
-            if (fileUploadResultDO.isFailure()) {
+            if (!fileUploadResultDO.isSuccess()) {
                 rs.setErrorCode(fileUploadResultDO.getErrorCode());
                 rs.setErrorMsg(fileUploadResultDO.getErrorMsg());
                 return rs;
             }
 
             //2.入库 filename,biz,dfsfilename
-            fastDFSFileDO.setBiz(null);
             fastDFSFileDO.setGroupName(fileUploadResultDO.getGroupName());
             fastDFSFileDO.setRemoteFileName(fileUploadResultDO.getRemoteFileName());
-            fileManager.addFileOne(fastDFSFileDO);
+            //查询是否存在 如果存在则更新 数据库唯一性索引保证 并发问题直接抛异常 插入失败
+            FileDO fileDO = fileManager.findFileOne(fastDFSFileDO.getBiz(), fastDFSFileDO.getKey(), fastDFSFileDO.getKeyId());
+            if (fileDO == null) {
+                fileManager.addFileOne(fastDFSFileDO);
+            } else {
+                fastDFSFileDO.setId(fileDO.getId());
+                fileManager.updateFileOne(fastDFSFileDO);
+            }
 
-            FileDO fileDO = new FileDO();
-            fileDO.setGroupName(fileUploadResultDO.getGroupName());
-            fileDO.setRemoteFileName(fileUploadResultDO.getRemoteFileName());
-            fileDO.setSourceIpAddr(trackerServerAddr);
+            fileDO = buildFileDO(fastDFSFileDO);
+
             rs.setFileDO(fileDO);
         } catch (Exception e) {
             FileErrorEnum.FILE_UPLOAD_ERROR.fillResult(rs);
@@ -71,26 +75,45 @@ public class FileOptServiceImpl implements FileOptService {
         return rs;
     }
 
+    //build FileDO
+    private FileDO buildFileDO(FastDFSFileDO fastDFSFileDO) {
+        FileDO fileDO = new FileDO();
+        fileDO.setGroupName(fastDFSFileDO.getGroupName());
+        fileDO.setRemoteFileName(fastDFSFileDO.getRemoteFileName());
+        fileDO.setFileSize(fastDFSFileDO.getFileSize());
+        fileDO.setBiz(fastDFSFileDO.getBiz());
+        fileDO.setKey(fastDFSFileDO.getKey());
+        fileDO.setKeyId(fastDFSFileDO.getKeyId());
+        fileDO.setSourceIpAddr(trackerServerAddr);
+        return fileDO;
+    }
+
     @Override
-    public FileOptResultDO getFile(String groupName, String remoteFileName) {
+    public FileOptResultDO getFile(FileDO fileDO) {
         FileOptResultDO rs = new FileOptResultDO();
 
-        if (StringUtils.isEmpty(groupName) || StringUtils.isEmpty(remoteFileName)) {
-            log.error("获取文件失败,参数为空错误:groupName={},remoteFileName", groupName, remoteFileName);
+        if (fileDO == null) {
+            log.error("获取文件失败,参数为空错误:fileDO");
             CommonErrorEnum.PARAM_EMPTY_ERROR.fillResult(rs);
             return rs;
         }
 
+        Integer biz = fileDO.getBiz();
+        Integer key = fileDO.getKey();
+        Long keyId = fileDO.getKeyId();
+
         try {
             //1.先从本地库里查询文件 如果不存在直接返回fail
-            FileDO fileDO = fileManager.findFileOne(groupName, remoteFileName);
+            fileDO = fileManager.findFileOne(biz, key, keyId);
             if (fileDO == null) {
-                log.error("从本地库里查询不到文件:groupName={},remoteFileName", groupName, remoteFileName);
+                log.error("从本地库里查询不到文件:biz={},key={},keyId={}", new Object[]{biz, key, keyId});
                 FileErrorEnum.FILE_DB_NOT_EXISTS_ERROR.fillResult(rs);
                 return rs;
             }
 
             //2.如果文件存在库中 从远程获取文件内容
+            String groupName = fileDO.getGroupName();
+            String remoteFileName = fileDO.getRemoteFileName();
             FileInfo fileInfo = fastDFSFileManager.getFileFast(groupName, remoteFileName);
             if (fileInfo == null) {
                 log.error("在fastDFS上未找到文件内容:groupName={},remoteFileName", groupName, remoteFileName);
@@ -101,17 +124,17 @@ public class FileOptServiceImpl implements FileOptService {
             rs.setFileDO(fileDO);
         } catch (Exception e) {
             FileErrorEnum.FILE_FETCH_ERROR.fillResult(rs);
-            log.error("上传获取失败,groupName={},remoteFileName:", groupName, remoteFileName, e);
+            log.error("获取文件失败,biz={},key={},keyId={}", new Object[]{biz, key, keyId}, e);
         }
         return rs;
     }
 
     @Override
-    public FileOptResultDO deleteFile(Long id, String groupName, String remoteFileName) {
+    public FileOptResultDO deleteFile(Long id) {
         FileOptResultDO rs = new FileOptResultDO();
 
-        if (id == null || StringUtils.isEmpty(groupName) || StringUtils.isEmpty(remoteFileName)) {
-            log.error("删除文件失败,参数为空错误:id={},groupName={},remoteFileName", new Object[]{id, groupName, remoteFileName});
+        if (id == null) {
+            log.error("删除文件失败,参数为空错误:id");
             CommonErrorEnum.PARAM_EMPTY_ERROR.fillResult(rs);
             return rs;
         }
@@ -120,18 +143,22 @@ public class FileOptServiceImpl implements FileOptService {
             //1.先从本地库里查询文件 如果不存在直接返回fail
             FileDO fileDO = fileManager.findFileById(id);
             if (fileDO == null) {
-                log.error("从本地库里查询不到要删除的文件:groupName={},remoteFileName", groupName, remoteFileName);
+                log.error("从本地库里查询不到要删除的文件:id", id);
                 FileErrorEnum.FILE_DB_NOT_EXISTS_ERROR.fillResult(rs);
                 return rs;
             }
 
             //2.如果文件存在库中 删除库和远程server file
-            fastDFSFileManager.deleteFileFast(groupName, remoteFileName);
+            String groupName = fileDO.getGroupName();
+            String remoteFileName = fileDO.getRemoteFileName();
+            //先删db 再删远程
             fileManager.deleteFileById(id);
+            fastDFSFileManager.deleteFileFast(groupName, remoteFileName);
             rs.setFileDO(fileDO);
+            log.info("删除文件成功,groupName={},remoteFileName={},name={}", new Object[]{fileDO.getGroupName(), fileDO.getRemoteFileName(), fileDO.getName()});
         } catch (Exception e) {
             FileErrorEnum.FILE_FETCH_ERROR.fillResult(rs);
-            log.error("上传获取失败,groupName={},remoteFileName:", groupName, remoteFileName, e);
+            log.error("删除文件失败,id={}", id, e);
         }
         return rs;
     }

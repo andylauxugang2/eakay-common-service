@@ -8,6 +8,8 @@
         <result column="remote_filename" property="remoteFileName"/>
         <result column="group_name" property="groupName"/>
         <result column="biz" property="biz"/>
+        <result column="biz_key" property="key"/>
+        <result column="biz_key_id" property="keyId"/>
         <result column="create_time" property="createTime" javaType="org.joda.time.DateTime"/>
         <result column="update_time" property="updateTime" javaType="org.joda.time.DateTime"/>
     </resultMap>
@@ -17,7 +19,9 @@
         filename,
         remote_filename,
         group_name,
-        biz
+        biz,
+        biz_key,
+        biz_key_id
     </sql>
 
     <insert id="insertOne" parameterType="fileDO">
@@ -29,6 +33,8 @@
         remote_filename,
         group_name,
         biz,
+        biz_key,
+        biz_key_id,
         create_time,
         update_time
         ) VALUES (
@@ -36,19 +42,26 @@
         #{remoteFileName},
         #{groupName},
         #{biz},
+        #{key},
+        #{keyId},
         #{createTime, javaType=org.joda.time.DateTime},
         #{updateTime, javaType=org.joda.time.DateTime}
         )
     </insert>
 
-    <select id="queryByGroupNameAndRemoteFileName" resultMap="fileResultMap">
+    <update id="updateOne" parameterType="fileDO">
+        update t_file set filename = #{name},remote_filename = #{remoteFileName},group_name = #{groupName},
+        update_time=#{updateTime, javaType=org.joda.time.DateTime}
+        where id = #{id}
+    </update>
+    <select id="queryByBizAndKeyAndKeyId" resultMap="fileResultMap">
         select <include refid="file_all_column"/>
         from t_file
-        where group_name = #{groupName} and remote_filename = #{remoteFileName}
+        where biz = #{biz} and biz_key = #{key} and biz_key_id = #{keyId}
     </select>
 
     <select id="queryById" resultMap="fileResultMap">
-        select id,filename,group_name
+        select <include refid="file_all_column"/>
         from t_file
         where id = #{id}
     </select>
