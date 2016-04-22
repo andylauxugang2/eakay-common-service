@@ -25,9 +25,6 @@ import org.springframework.stereotype.Service;
 @Service
 public class FileOptServiceImpl implements FileOptService {
 
-
-    public String trackerServerAddr;
-
     @Autowired
     private FastDFSFileManager fastDFSFileManager;
     @Autowired
@@ -40,7 +37,7 @@ public class FileOptServiceImpl implements FileOptService {
 
         try {
             //1.上传到fast dfs server
-            if (fastDFSFileDO.getContent() == null) {
+            if (fastDFSFileDO.getContent() == null || fastDFSFileDO.getContent().length == 0) {
                 log.error("上传文件失败,文件为空:filename={}", fastDFSFileDO.getName());
                 FileErrorEnum.FILE_EMPTY_ERROR.fillResult(rs);
                 return rs;
@@ -56,6 +53,8 @@ public class FileOptServiceImpl implements FileOptService {
             //2.入库 filename,biz,dfsfilename
             fastDFSFileDO.setGroupName(fileUploadResultDO.getGroupName());
             fastDFSFileDO.setRemoteFileName(fileUploadResultDO.getRemoteFileName());
+            fastDFSFileDO.setSourceIpAddr(fileUploadResultDO.getSourceIpAddr());
+
             //查询是否存在 如果存在则更新 数据库唯一性索引保证 并发问题直接抛异常 插入失败
             FileDO fileDO = fileManager.findFileOne(fastDFSFileDO.getBiz(), fastDFSFileDO.getKey(), fastDFSFileDO.getKeyId());
             if (fileDO == null) {
@@ -78,13 +77,15 @@ public class FileOptServiceImpl implements FileOptService {
     //build FileDO
     private FileDO buildFileDO(FastDFSFileDO fastDFSFileDO) {
         FileDO fileDO = new FileDO();
+        fileDO.setId(fastDFSFileDO.getId());
+        fileDO.setName(fastDFSFileDO.getName());
         fileDO.setGroupName(fastDFSFileDO.getGroupName());
         fileDO.setRemoteFileName(fastDFSFileDO.getRemoteFileName());
         fileDO.setFileSize(fastDFSFileDO.getFileSize());
         fileDO.setBiz(fastDFSFileDO.getBiz());
         fileDO.setKey(fastDFSFileDO.getKey());
         fileDO.setKeyId(fastDFSFileDO.getKeyId());
-        fileDO.setSourceIpAddr(trackerServerAddr);
+        fileDO.setSourceIpAddr(fastDFSFileDO.getSourceIpAddr());
         return fileDO;
     }
 
@@ -111,7 +112,7 @@ public class FileOptServiceImpl implements FileOptService {
                 return rs;
             }
 
-            //2.如果文件存在库中 从远程获取文件内容
+            //2.如果文件存在库中 从远程获取文件信息
             String groupName = fileDO.getGroupName();
             String remoteFileName = fileDO.getRemoteFileName();
             FileInfo fileInfo = fastDFSFileManager.getFileFast(groupName, remoteFileName);
@@ -121,6 +122,7 @@ public class FileOptServiceImpl implements FileOptService {
                 return rs;
             }
 
+            fileDO.setSourceIpAddr(fileInfo.getSourceIpAddr());
             rs.setFileDO(fileDO);
         } catch (Exception e) {
             FileErrorEnum.FILE_FETCH_ERROR.fillResult(rs);

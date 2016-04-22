@@ -14,7 +14,7 @@ import org.apache.commons.pool.impl.GenericObjectPool;
 public class BasicFastDFSSource implements FastDFSSource {
 
     public BasicFastDFSSource() {
-        System.out.println();
+
     }
 
     @Override

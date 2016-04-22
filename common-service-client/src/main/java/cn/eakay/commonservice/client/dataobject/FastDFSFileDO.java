@@ -30,4 +30,11 @@ public class FastDFSFileDO extends FileDO {
         this.content = content;
         this.ext = ext;
     }
+
+    public long getFileSize(){
+        if(this.content == null || this.content.length == 0){
+            return 0;
+        }
+        return content.length;
+    }
 }

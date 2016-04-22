@@ -68,6 +68,7 @@ public class FastDFSFileManagerImpl implements FastDFSFileManager {
 
             resultDO.setGroupName(uploadResults[0]);
             resultDO.setRemoteFileName(uploadResults[1]);
+            resultDO.setSourceIpAddr(trackerServer.getInetSocketAddress().getHostName());
 
             String fileAbsolutePath = PROTOCOL + trackerServer.getInetSocketAddress().getHostName()
                     + SEPARATOR

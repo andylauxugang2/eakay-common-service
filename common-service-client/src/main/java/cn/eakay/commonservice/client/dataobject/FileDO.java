@@ -16,7 +16,6 @@ public class FileDO extends BaseDO {
 
     protected String sourceIpAddr;
     protected long fileSize;
-    protected Date createTimestamp;
     protected int crc32;
     private String name;
     private String groupName;

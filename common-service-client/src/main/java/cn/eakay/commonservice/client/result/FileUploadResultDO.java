@@ -12,5 +12,6 @@ public class FileUploadResultDO extends ResultDO {
 	private static final long serialVersionUID = -1587433265932391659L;
 	private String groupName;
 	private String remoteFileName;
+	private String sourceIpAddr;
 
 }

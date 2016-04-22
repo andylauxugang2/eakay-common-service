@@ -10,6 +10,7 @@
         <result column="biz" property="biz"/>
         <result column="biz_key" property="key"/>
         <result column="biz_key_id" property="keyId"/>
+        <result column="file_size" property="fileSize"/>
         <result column="create_time" property="createTime" javaType="org.joda.time.DateTime"/>
         <result column="update_time" property="updateTime" javaType="org.joda.time.DateTime"/>
     </resultMap>
@@ -21,7 +22,8 @@
         group_name,
         biz,
         biz_key,
-        biz_key_id
+        biz_key_id,
+        file_size
     </sql>
 
     <insert id="insertOne" parameterType="fileDO">
@@ -35,6 +37,7 @@
         biz,
         biz_key,
         biz_key_id,
+        file_size,
         create_time,
         update_time
         ) VALUES (
@@ -44,6 +47,7 @@
         #{biz},
         #{key},
         #{keyId},
+        #{fileSize},
         #{createTime, javaType=org.joda.time.DateTime},
         #{updateTime, javaType=org.joda.time.DateTime}
         )
@@ -51,9 +55,11 @@
 
     <update id="updateOne" parameterType="fileDO">
         update t_file set filename = #{name},remote_filename = #{remoteFileName},group_name = #{groupName},
+        file_size = #{fileSize},
         update_time=#{updateTime, javaType=org.joda.time.DateTime}
         where id = #{id}
     </update>
+
     <select id="queryByBizAndKeyAndKeyId" resultMap="fileResultMap">
         select <include refid="file_all_column"/>
         from t_file

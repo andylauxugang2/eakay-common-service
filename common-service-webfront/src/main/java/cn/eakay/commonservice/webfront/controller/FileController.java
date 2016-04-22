@@ -51,12 +51,9 @@ public class FileController extends BaseController {
         log.info("begin uploading files " + uploadFiles.length);
 
         List<FileOptResultDO> result = new ArrayList<>();
-
+        boolean failedItem = false;
         for (int i = 0; i < uploadFiles.length; i++) {
             CommonsMultipartFile multipartFile = uploadFiles[i];
-            if (multipartFile == null || multipartFile.isEmpty()) {
-                continue;
-            }
 
             FastDFSFileDO fastDFSFileDO = new FastDFSFileDO();
             try {
@@ -73,6 +70,7 @@ public class FileController extends BaseController {
                 FileOptResultDO fileOptResultDO = fileOptService.uploadFile(fastDFSFileDO);
 
                 if (!fileOptResultDO.isSuccess()) {
+                    failedItem = true;
                     log.error("uploading file failed error:{}", fileOptResultDO.getErrorCode() + fileOptResultDO.getErrorMsg());
                 }
 
@@ -86,7 +84,9 @@ public class FileController extends BaseController {
                 return new ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR);
             }
         }
-
+        if(failedItem){
+            return new ResponseEntity<List<FileOptResultDO>>(result, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
         return new ResponseEntity<List<FileOptResultDO>>(result, HttpStatus.CREATED);
     }
 
@@ -112,6 +112,7 @@ public class FileController extends BaseController {
 
         if (!resultDO.isSuccess()) {
             log.error("Fetching File failed,biz={},key={},keyId={},error={}", new Object[]{biz, key, keyId, resultDO.getErrorCode() + resultDO.getErrorMsg()});
+            return new ResponseEntity<FileOptResultDO>(resultDO, HttpStatus.INTERNAL_SERVER_ERROR);
         }
         return new ResponseEntity<FileOptResultDO>(resultDO, HttpStatus.OK);
     }
@@ -130,6 +131,7 @@ public class FileController extends BaseController {
         FileOptResultDO resultDO = fileOptService.deleteFile(id);
         if (!resultDO.isSuccess()) {
             log.error("delete file failed:fileId={}, error={}", new Object[]{id, resultDO.getErrorCode() + resultDO.getErrorMsg()});
+            return new ResponseEntity<FileOptResultDO>(resultDO, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
         return new ResponseEntity<FileOptResultDO>(resultDO, HttpStatus.NO_CONTENT);
