@@ -4,10 +4,7 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.pool.ObjectPool;
 import org.apache.commons.pool.impl.GenericObjectPool;
-import org.csource.fastdfs.StorageClient;
-import org.csource.fastdfs.StorageServer;
-import org.csource.fastdfs.TrackerClient;
-import org.csource.fastdfs.TrackerServer;
+import org.csource.fastdfs.*;
 
 import java.io.Serializable;
 
@@ -84,14 +81,25 @@ public class PoolableFastDFSSource implements Serializable {
     /**
      * 验证 对象是否可以使用 是否可以 conn to 每个fast dfs server
      * _factory.validateObject(obj) 会调 obj validate
-     *
+     * <p/>
      * 重要提示：实现该方法 会保证启动服务时获取资源失败来保证启动异常 服务不可用
      *
      * @see BasicFastDFSSource#validateTrackerClientFactory
      * @see GenericObjectPool#addObjectToPool
      */
     public void validate() throws Exception {
-        //TODO test connect to fast dfs server
+        log.info("开始调用validate判断对象是否该丢弃");
+        //test connect to fast dfs server
+        /*try {
+            if (!ProtoCommon.activeTest(trackerClient.getConnection().getSocket())) {
+                log.error("长连接失效要从池里丢弃本对象,sourceId={}", this.getSourceId());
+                throw new IllegalStateException("长连接失效要从池里丢弃本对象");
+            }
+        }catch (Exception e) {
+            log.error("validate池对象失败,sourceId={}:", this.getSourceId(), e);
+            throw e;
+        }*/
+
     }
 
     /**
