@@ -26,12 +26,18 @@
 	<!-- Activates annotation-based bean configuration -->
 	<context:annotation-config />
 
+	<aop:aspectj-autoproxy>
+		<aop:include name="timingAspect" />
+	</aop:aspectj-autoproxy>
+
+	<bean id="timingAspect" class="org.perf4j.slf4j.aop.TimingAspect"/>
+
 	<!-- Scans for application @Components to deploy -->
 	<context:component-scan base-package="cn.eakay.commonservice.biz.service" />
 	<context:component-scan base-package="cn.eakay.commonservice.biz.manager" />
     <context:component-scan base-package="cn.eakay.commonservice.repository.db.mybatis" />
-    <context:component-scan base-package="cn.eakay.commons.base.performance.aop" />
-	<bean id="timingAspect" class="org.perf4j.slf4j.aop.TimingAspect"/>
+    <!--<context:component-scan base-package="cn.eakay.commons.base.performance.aop" />-->
+
 
 	<!-- datasource -->
 	<import resource="classpath:/source/datasource-commonservice.xml" />

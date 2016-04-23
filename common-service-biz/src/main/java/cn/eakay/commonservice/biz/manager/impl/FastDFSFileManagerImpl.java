@@ -44,7 +44,7 @@ public class FastDFSFileManagerImpl implements FastDFSFileManager {
             StorageClient storageClient = poolableFastDFSSource.getStorageClient();
             TrackerServer trackerServer = poolableFastDFSSource.getTrackerServer();
 
-            log.info("Upload File Name:{},File Length:", file.getName(), file.getContent().length);
+            log.info("Upload File Name:{},File Length:{}", file.getName(), file.getContent().length);
 
             NameValuePair[] meta_list = new NameValuePair[3];
             meta_list[0] = new NameValuePair("width", file.getWidth());
@@ -70,17 +70,16 @@ public class FastDFSFileManagerImpl implements FastDFSFileManager {
             resultDO.setRemoteFileName(uploadResults[1]);
             resultDO.setSourceIpAddr(trackerServer.getInetSocketAddress().getHostName());
 
-            String fileAbsolutePath = PROTOCOL + trackerServer.getInetSocketAddress().getHostName()
-                    + SEPARATOR
-                    + TRACKER_NGNIX_PORT
-                    + SEPARATOR
-                    + groupName
-                    + SEPARATOR
-                    + remoteFileName;
-
-            log.info("upload file successfully!!!  " + "group_name: " + groupName + ", remoteFileName:"
+            log.info("upload file successfully," + "group_name: " + groupName + ", remoteFileName:"
                     + " " + remoteFileName);
             if (log.isDebugEnabled()) {
+                String fileAbsolutePath = PROTOCOL + trackerServer.getInetSocketAddress().getHostName()
+                        + SEPARATOR
+                        + TRACKER_NGNIX_PORT
+                        + SEPARATOR
+                        + groupName
+                        + SEPARATOR
+                        + remoteFileName;
                 log.info("upload file remote url:", fileAbsolutePath);
             }
         } catch (Exception e) {

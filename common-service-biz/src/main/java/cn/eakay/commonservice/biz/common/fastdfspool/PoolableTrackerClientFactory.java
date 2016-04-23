@@ -41,7 +41,7 @@ public class PoolableTrackerClientFactory implements PoolableObjectFactory {
 
         initializeSource(sourceDO);
 
-        log.info("创建FastDFS连接对象并放入池内:sourceDO={}", sourceDO);
+        log.info("创建FastDFS连接对象并放入池内:sourceDO={}", sourceDO.getSourceId());
         return sourceDO;
     }
 

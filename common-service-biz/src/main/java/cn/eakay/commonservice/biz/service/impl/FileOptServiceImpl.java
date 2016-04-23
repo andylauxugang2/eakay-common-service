@@ -13,6 +13,7 @@ import cn.eakay.commonservice.client.result.FileUploadResultDO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.csource.fastdfs.FileInfo;
+import org.perf4j.aop.Profiled;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
@@ -30,7 +31,7 @@ public class FileOptServiceImpl implements FileOptService {
     @Autowired
     private FileManager fileManager;
 
-    @Performance(desc = "根据id获取单个订单")
+    @Profiled(tag = "FileOptService#uploadFile({$0.name},{$0.biz},{$0.key})") // logger default org.perf4j.TimingLogger
     @Override
     public FileOptResultDO uploadFile(FastDFSFileDO fastDFSFileDO) {
         FileOptResultDO rs = new FileOptResultDO();
@@ -89,6 +90,7 @@ public class FileOptServiceImpl implements FileOptService {
         return fileDO;
     }
 
+    @Profiled(tag = "FileOptService#getFile({$0.biz},{$0.key},{$0.keyId})")
     @Override
     public FileOptResultDO getFile(FileDO fileDO) {
         FileOptResultDO rs = new FileOptResultDO();
@@ -131,6 +133,7 @@ public class FileOptServiceImpl implements FileOptService {
         return rs;
     }
 
+    @Profiled(tag = "FileOptService#deleteFile({$0})")
     @Override
     public FileOptResultDO deleteFile(Long id) {
         FileOptResultDO rs = new FileOptResultDO();

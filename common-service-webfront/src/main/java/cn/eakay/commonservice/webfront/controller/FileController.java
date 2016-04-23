@@ -6,6 +6,8 @@ import cn.eakay.commonservice.client.dataobject.FileDO;
 import cn.eakay.commonservice.client.result.FileOptResultDO;
 import cn.eakay.commonservice.webfront.base.BaseController;
 import lombok.extern.slf4j.Slf4j;
+import org.perf4j.StopWatch;
+import org.perf4j.slf4j.Slf4JStopWatch;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -44,6 +46,7 @@ public class FileController extends BaseController {
                                                                  @RequestParam("biz") Integer biz,
                                                                  @RequestParam("key") Integer key,
                                                                  @RequestParam("keyId") Long keyId) {
+        StopWatch stopWatch = new Slf4JStopWatch("/file/uploads");
         if (uploadFiles.length == 0) {
             log.error("uploads file error:{}", "param uploadfiles is empty");
             return new ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR);
@@ -71,7 +74,10 @@ public class FileController extends BaseController {
 
                 if (!fileOptResultDO.isSuccess()) {
                     failedItem = true;
-                    log.error("uploading file failed error:{}", fileOptResultDO.getErrorCode() + fileOptResultDO.getErrorMsg());
+                    log.error("uploading file failed,filename={},biz={},key={},error:{}",
+                            new Object[]{fastDFSFileDO.getName(), biz, key, fileOptResultDO.getErrorCode() + fileOptResultDO.getErrorMsg()});
+                } else {
+                    log.info("upload file success,filename={},biz={},key={}", new Object[]{fastDFSFileDO.getName(), biz, key});
                 }
 
                 //客户端需要遍历结果集 获取失败的上传item
@@ -84,9 +90,10 @@ public class FileController extends BaseController {
                 return new ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR);
             }
         }
-        if(failedItem){
+        if (failedItem) {
             return new ResponseEntity<List<FileOptResultDO>>(result, HttpStatus.INTERNAL_SERVER_ERROR);
         }
+        stopWatch.stop();
         return new ResponseEntity<List<FileOptResultDO>>(result, HttpStatus.CREATED);
     }
 
@@ -114,6 +121,7 @@ public class FileController extends BaseController {
             log.error("Fetching File failed,biz={},key={},keyId={},error={}", new Object[]{biz, key, keyId, resultDO.getErrorCode() + resultDO.getErrorMsg()});
             return new ResponseEntity<FileOptResultDO>(resultDO, HttpStatus.INTERNAL_SERVER_ERROR);
         }
+        log.info("Fetching File success with biz={},key={},keyId={}", new Object[]{biz, key, keyId});
         return new ResponseEntity<FileOptResultDO>(resultDO, HttpStatus.OK);
     }
 
@@ -126,7 +134,7 @@ public class FileController extends BaseController {
     @RequestMapping(value = "/{id}", method = RequestMethod.DELETE)
     public ResponseEntity<FileOptResultDO> deleteFile(@PathVariable("id") Long id) {
 
-        log.info("Fetching & delete file with fileId={}", id);
+        log.info("delete file with fileId={}", id);
 
         FileOptResultDO resultDO = fileOptService.deleteFile(id);
         if (!resultDO.isSuccess()) {
@@ -134,6 +142,7 @@ public class FileController extends BaseController {
             return new ResponseEntity<FileOptResultDO>(resultDO, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
+        log.info("delete file success,fileId={}", id);
         return new ResponseEntity<FileOptResultDO>(resultDO, HttpStatus.NO_CONTENT);
 
     }
