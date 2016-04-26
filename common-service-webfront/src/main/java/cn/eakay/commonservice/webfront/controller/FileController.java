@@ -42,7 +42,7 @@ public class FileController extends BaseController {
      * @return
      */
     @RequestMapping(value = "/uploads", method = RequestMethod.POST)
-    public ResponseEntity<List<FileOptResultDO>> uploadFileBatch(@RequestParam("uploadfiles") CommonsMultipartFile[] uploadFiles,
+    public ResponseEntity<FileOptResultDO[]> uploadFileBatch(@RequestParam("uploadfiles") CommonsMultipartFile[] uploadFiles,
                                                                  @RequestParam("biz") Integer biz,
                                                                  @RequestParam("key") Integer key,
                                                                  @RequestParam("keyId") Long keyId) {
@@ -90,11 +90,12 @@ public class FileController extends BaseController {
                 return new ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR);
             }
         }
+        FileOptResultDO[] array = result.toArray(new FileOptResultDO[result.size()]);
         if (failedItem) {
-            return new ResponseEntity<List<FileOptResultDO>>(result, HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(array, HttpStatus.INTERNAL_SERVER_ERROR);
         }
         stopWatch.stop();
-        return new ResponseEntity<List<FileOptResultDO>>(result, HttpStatus.CREATED);
+        return new ResponseEntity<>(array, HttpStatus.CREATED);
     }
 
     /**
@@ -119,8 +120,9 @@ public class FileController extends BaseController {
 
         if (!resultDO.isSuccess()) {
             log.error("Fetching File failed,biz={},key={},keyId={},error={}", new Object[]{biz, key, keyId, resultDO.getErrorCode() + resultDO.getErrorMsg()});
-            return new ResponseEntity<FileOptResultDO>(resultDO, HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<FileOptResultDO>(resultDO, HttpStatus.OK);
         }
+
         log.info("Fetching File success with biz={},key={},keyId={}", new Object[]{biz, key, keyId});
         return new ResponseEntity<FileOptResultDO>(resultDO, HttpStatus.OK);
     }

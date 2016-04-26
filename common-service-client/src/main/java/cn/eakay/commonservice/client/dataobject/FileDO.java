@@ -1,6 +1,7 @@
 package cn.eakay.commonservice.client.dataobject;
 
 import cn.eakay.commons.base.BaseDO;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 
 import java.util.Date;
@@ -11,6 +12,7 @@ import java.util.Date;
  * @author xugang
  */
 @Data
+@JsonIgnoreProperties(ignoreUnknown = true, value = {"createTime", "updateTime"})
 public class FileDO extends BaseDO {
     private static final long serialVersionUID = 3721716059117679633L;
 
