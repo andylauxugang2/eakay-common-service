@@ -51,22 +51,21 @@ public class FileOptServiceImpl implements FileOptService {
                 return rs;
             }
 
-            //2.入库 filename,biz,dfsfilename
             fastDFSFileDO.setGroupName(fileUploadResultDO.getGroupName());
             fastDFSFileDO.setRemoteFileName(fileUploadResultDO.getRemoteFileName());
             fastDFSFileDO.setSourceIpAddr(fileUploadResultDO.getSourceIpAddr());
 
+            //2.入库 filename,biz,dfsfilename
             //查询是否存在 如果存在则更新 数据库唯一性索引保证 并发问题直接抛异常 插入失败
-            FileDO fileDO = fileManager.findFileOne(fastDFSFileDO.getBiz(), fastDFSFileDO.getKey(), fastDFSFileDO.getKeyId());
+            /*FileDO fileDO = fileManager.findFileOne(fastDFSFileDO.getBiz(), fastDFSFileDO.getKey(), fastDFSFileDO.getKeyId());
             if (fileDO == null) {
                 fileManager.addFileOne(fastDFSFileDO);
             } else {
                 fastDFSFileDO.setId(fileDO.getId());
                 fileManager.updateFileOne(fastDFSFileDO);
-            }
+            }*/
 
-            fileDO = buildFileDO(fastDFSFileDO);
-
+            FileDO fileDO = buildFileDO(fastDFSFileDO);
             rs.setFileDO(fileDO);
         } catch (Exception e) {
             FileErrorEnum.FILE_UPLOAD_ERROR.fillResult(rs);

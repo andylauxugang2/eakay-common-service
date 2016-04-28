@@ -38,14 +38,12 @@ public class FileController extends BaseController {
      * @param uploadFiles
      * @param biz
      * @param key
-     * @param keyId
      * @return
      */
     @RequestMapping(value = "/uploads", method = RequestMethod.POST)
     public ResponseEntity<FileOptResultDO[]> uploadFileBatch(@RequestParam("uploadfiles") CommonsMultipartFile[] uploadFiles,
-                                                                 @RequestParam("biz") Integer biz,
-                                                                 @RequestParam("key") Integer key,
-                                                                 @RequestParam("keyId") Long keyId) {
+                                                             @RequestParam("biz") Integer biz,
+                                                             @RequestParam("key") Integer key) {
         StopWatch stopWatch = new Slf4JStopWatch("/file/uploads");
         if (uploadFiles.length == 0) {
             log.error("uploads file error:{}", "param uploadfiles is empty");
@@ -67,7 +65,7 @@ public class FileController extends BaseController {
                 fastDFSFileDO.setContent(fileData);
                 fastDFSFileDO.setBiz(biz);
                 fastDFSFileDO.setKey(key);
-                fastDFSFileDO.setKeyId(keyId);
+//                fastDFSFileDO.setKeyId(keyId);
 
                 //fileOptService.uploadFile不会抛异常
                 FileOptResultDO fileOptResultDO = fileOptService.uploadFile(fastDFSFileDO);

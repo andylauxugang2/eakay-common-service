@@ -6,17 +6,21 @@ package cn.eakay.commonservice.client.common.constant;
  */
 public enum BizEnum {
 
-    MERCHANT_ORDER("order", 1),
-    MERCHANT_CAR("car", 2),
+    BIZ_ORDER("order", 1, "EAKAYORDER"),
+    BIZ_CAR("car", 2, "EAKAYORDER"),
+    BIZ_USER("user", 3, "EAKAYUSER"),
+    BIZ_MALL("mall", 4, "EAKAYMALL"),
 
-    UNKOWN("unkown", -1);
+    UNKOWN("unkown", -1, "UNKOWN");
 
     private String biz;
     private int code;
+    private String group;
 
-    private BizEnum(String biz, int code) {
+    private BizEnum(String biz, int code, String group) {
         this.biz = biz;
         this.code = code;
+        this.group = group;
     }
 
     public String getBiz() {
@@ -25,6 +29,10 @@ public enum BizEnum {
 
     public int getCode() {
         return code;
+    }
+
+    public String getGroup() {
+        return group;
     }
 
     public static BizEnum getEnum(String biz) {
@@ -36,4 +44,12 @@ public enum BizEnum {
         return UNKOWN;
     }
 
+    public static BizEnum getEnumByCode(int code) {
+        for (BizEnum enum_ : BizEnum.values()) {
+            if (enum_.getCode() == code) {
+                return enum_;
+            }
+        }
+        return UNKOWN;
+    }
 }

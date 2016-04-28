@@ -59,4 +59,9 @@ public class CommonServiceConstant {
     public static final String DATE_FMT_4 = "MM-dd HH:mm";
     public static final Integer ITINERARY_PRICE = 1000;//10分
 
+    /**
+     * 地址
+     */
+    public static final String IMG_SERVER_ADDRESS = "img.eakay.cn"; //图片server
+
 }

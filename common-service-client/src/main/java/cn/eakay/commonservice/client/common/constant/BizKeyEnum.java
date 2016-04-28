@@ -12,7 +12,9 @@ public enum BizKeyEnum {
     TAKE_CAR("取车", 1),
     RETURN_CAR("还车", 2),
     VEHICLE("车辆", 3),
-    VEHICLE_DAMAGE("车辆损伤", 3),
+    VEHICLE_DAMAGE("车辆损伤", 4),
+    USER_CERT("用户证件", 5),
+    VEHICLE_FEEDBACK("车况反馈", 6),
 
     UNKOWN("未知", -1);
 

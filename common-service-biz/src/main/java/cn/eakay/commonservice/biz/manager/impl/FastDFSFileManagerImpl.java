@@ -6,10 +6,13 @@ import cn.eakay.commonservice.biz.common.exception.FileOptException;
 import cn.eakay.commonservice.biz.common.fastdfspool.FastDFSSource;
 import cn.eakay.commonservice.biz.manager.FastDFSFileManager;
 import cn.eakay.commonservice.biz.common.fastdfspool.PoolableFastDFSSource;
+import cn.eakay.commonservice.client.common.constant.BizEnum;
+import cn.eakay.commonservice.client.common.constant.CommonServiceConstant;
 import cn.eakay.commonservice.client.dataobject.FastDFSFileDO;
 import cn.eakay.commonservice.client.result.FileUploadResultDO;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.StringUtils;
 import org.csource.common.NameValuePair;
 import org.csource.fastdfs.FileInfo;
 import org.csource.fastdfs.StorageClient;
@@ -36,15 +39,16 @@ public class FastDFSFileManagerImpl implements FastDFSFileManager {
 
         PoolableFastDFSSource poolableFastDFSSource = null;
         FileUploadResultDO resultDO = new FileUploadResultDO();
-
+        String group = BizEnum.getEnumByCode(file.getBiz()).getGroup();
         try {
+            handleFile(file);
             //getFastDFSSource调用一次会addObject一次到pool
             poolableFastDFSSource = fastDFSSource.getFastDFSSource();
             log.info("从fast对象池中获取一个Source:id={}", poolableFastDFSSource.getSourceId());
             StorageClient storageClient = poolableFastDFSSource.getStorageClient();
             TrackerServer trackerServer = poolableFastDFSSource.getTrackerServer();
 
-            log.info("Upload File Name:{},File Length:{}", file.getName(), file.getContent().length);
+            log.info("begin Upload File Name:{},File Length:{},Group:{}", file.getName(), file.getContent().length, group);
 
             NameValuePair[] meta_list = new NameValuePair[3];
             meta_list[0] = new NameValuePair("width", file.getWidth());
@@ -53,7 +57,7 @@ public class FastDFSFileManagerImpl implements FastDFSFileManager {
 
             long startTime = System.currentTimeMillis();
 
-            String[] uploadResults = storageClient.upload_file(file.getContent(), file.getExt(), meta_list);
+            String[] uploadResults = storageClient.upload_file(group, file.getContent(), file.getExt(), meta_list);
 
             log.info("upload_file time used:" + (System.currentTimeMillis() - startTime) + " ms");
 
@@ -68,7 +72,7 @@ public class FastDFSFileManagerImpl implements FastDFSFileManager {
 
             resultDO.setGroupName(uploadResults[0]);
             resultDO.setRemoteFileName(uploadResults[1]);
-            resultDO.setSourceIpAddr(trackerServer.getInetSocketAddress().getHostName());
+            resultDO.setSourceIpAddr(CommonServiceConstant.IMG_SERVER_ADDRESS);
 
             log.info("upload file successfully," + "group_name: " + groupName + ", remoteFileName:"
                     + " " + remoteFileName);
@@ -87,7 +91,7 @@ public class FastDFSFileManagerImpl implements FastDFSFileManager {
                 e.printStackTrace();
             }
             FileErrorEnum.FILE_UPLOAD_ERROR.fillResult(resultDO);
-            log.error("occur Exception when uploadind the file: " + file.getName(), e);
+            log.error("occur Exception when uploadind the file: " + file.getName() + ",group=" + group, e);
         } finally {
             try {
                 if (poolableFastDFSSource != null) poolableFastDFSSource.close();
@@ -98,6 +102,21 @@ public class FastDFSFileManagerImpl implements FastDFSFileManager {
             }
         }
         return resultDO;
+    }
+
+    private void handleFile(FastDFSFileDO file) {
+        if (file == null) {
+            throw new IllegalStateException("文件file不能为空");
+        }
+        String fileName = file.getName();
+
+        if (StringUtils.isEmpty(fileName)) {
+            throw new IllegalStateException("文件fileName获取不到");
+        }
+
+        if (StringUtils.isEmpty(file.getExt())) {
+            file.setExt(fileName.substring(fileName.lastIndexOf(".") + 1, fileName.length()));
+        }
     }
 
     @Override
@@ -141,5 +160,4 @@ public class FastDFSFileManagerImpl implements FastDFSFileManager {
             }
         }
     }
-
 }
