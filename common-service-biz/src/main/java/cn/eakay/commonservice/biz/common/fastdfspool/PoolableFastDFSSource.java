@@ -6,6 +6,7 @@ import org.apache.commons.pool.ObjectPool;
 import org.apache.commons.pool.impl.GenericObjectPool;
 import org.csource.fastdfs.*;
 
+import java.io.IOException;
 import java.io.Serializable;
 
 /**
@@ -72,9 +73,8 @@ public class PoolableFastDFSSource implements Serializable {
     }
 
     protected void setClosed(final boolean closed) {
-        //回收socket资源 fast SDF client 已经帮我们回收socket 不要重复close
-        //trackerClient.getConnection().close();
-
+        //回收socket资源 fast SDF client 已经帮我们回收storageServer trackerClient包含一个trackerServer
+        //trackerClient.getConnection().close(); 如果关闭 trackerServer 会 java.net.SocketException: Connection reset
         this.closed = closed;
     }
 
@@ -90,15 +90,15 @@ public class PoolableFastDFSSource implements Serializable {
     public void validate() throws Exception {
         log.info("开始调用validate判断对象是否该丢弃");
         //test connect to fast dfs server
-        /*try {
+        try {
             if (!ProtoCommon.activeTest(trackerClient.getConnection().getSocket())) {
                 log.error("长连接失效要从池里丢弃本对象,sourceId={}", this.getSourceId());
                 throw new IllegalStateException("长连接失效要从池里丢弃本对象");
             }
-        }catch (Exception e) {
+        } catch (Exception e) {
             log.error("validate池对象失败,sourceId={}:", this.getSourceId(), e);
             throw e;
-        }*/
+        }
 
     }
 

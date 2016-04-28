@@ -33,7 +33,9 @@ public class PoolableTrackerClientFactory implements PoolableObjectFactory {
      */
     @Override
     public Object makeObject() throws Exception {
+        //trackerClient含有一个TrackerGroup(static,可被多个trackerClient重复使用 使用时不需要考虑线程安全问题)
         TrackerClient trackerClient = new TrackerClient();
+        //getConnection是线程安全的
         TrackerServer trackerServer = trackerClient.getConnection(); //use ClientGlobal and new TrackerServer and Socket
         StorageServer storageServer = null;
         StorageClient storageClient = new StorageClient(trackerServer, storageServer);
@@ -58,7 +60,7 @@ public class PoolableTrackerClientFactory implements PoolableObjectFactory {
 
     /**
      * 销毁
-     * returnObject -》addObjectToPool 发生异常 时 并且注册了factory的 回调销毁方法
+     * returnObject -》addObjectToPool if(testOnReturn && !(_factory.validateObject(obj))) 时 并且注册了factory的 回调销毁方法
      *
      * @param obj
      * @throws Exception 抛出的任何异常 被commons-pool捕获
@@ -69,6 +71,7 @@ public class PoolableTrackerClientFactory implements PoolableObjectFactory {
             //将资源close 否则回收失败下次还会掉
             ((PoolableFastDFSSource) obj).setClosed(true);
         }
+        log.info("销毁池对象,sourceId={}", ((PoolableFastDFSSource) obj).getSourceId());
         //commons-pool _numActive 减一 并重新分配queue 此处不对obj做内存处理
     }
 
@@ -76,6 +79,8 @@ public class PoolableTrackerClientFactory implements PoolableObjectFactory {
      * 验证有效性
      *
      * testOnBorrow=true:borrowObject调本方法验证这个对象是否有效,如果失败则这个对象会被丢弃
+     *      java.util.NoSuchElementException: Could not create a validated object, cause: ValidateObject failed
+     *
      * testOnReturn=ture:returnObject调本方法验证这个对象是否有效,如果失败则这个对象会被丢弃
      *
      * @param obj
@@ -88,6 +93,7 @@ public class PoolableTrackerClientFactory implements PoolableObjectFactory {
                 validateConn((PoolableFastDFSSource) obj);
                 return true;
             } catch (Exception e) {
+                log.info("丢弃池对象,sourceId={}", ((PoolableFastDFSSource) obj).getSourceId());
                 return false;
             }
         } else {

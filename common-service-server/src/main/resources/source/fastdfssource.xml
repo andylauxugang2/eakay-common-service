@@ -11,6 +11,7 @@
 		<property name="maxActive" value="${commonservice.fastdfspool.maxActive}" />
 		<property name="maxIdle" value="${commonservice.fastdfspool.maxIdle}" />
 		<property name="maxWait" value="${commonservice.fastdfspool.maxWait}" />
+		<!-- 带宽有限情况下 禁用 -->
 		<property name="testOnBorrow" value="${commonservice.fastdfspool.testOnBorrow}" />
 		<property name="testOnReturn" value="${commonservice.fastdfspool.testOnReturn}" />
 	</bean>
